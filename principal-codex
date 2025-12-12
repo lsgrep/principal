@@ -103,6 +103,15 @@ RULES:
 - Skip purely cosmetic changes
 - If no meaningful improvements remain, make no changes"
 
+PERFORMANCE CHECKLIST (apply when relevant; keep changes focused):
+- Complexity scanning: nested iteration and hidden O(n^2) (e.g., contains/indexOf in loops), repeated computation, recursion without memoization, string concat in loops, cartesian products
+- Hot paths: distinguish setup vs steady-state; prioritize code on per-request/inner loops
+- I/O patterns: N+1 queries, sequential independent I/O instead of parallel, unbatched writes, missing pooling, blocking sync calls in async contexts
+- Data structures: list used as a set, linear search instead of map, wrong map impl, unbounded growth
+- Allocation: new objects in hot loops, autoboxing, string/regex churn, stream/lambda overhead, excessive defensive copies
+- Concurrency: over-synchronization, lock contention, thread-per-request, unbounded queues, busy waiting
+- Config/Deps: untuned pool/timeouts/batch sizes/caches/retries; heavy/duplicated libs or per-call clients/object mappers
+
 if [[ -n "$FOCUS_AREA" ]]; then
     BASE_PROMPT="${BASE_PROMPT}
 
