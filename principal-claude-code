@@ -89,8 +89,17 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
+if [[ "$DRY_RUN" == false ]]; then
+    # Avoid committing unrelated user work by requiring a clean tree up front
+    if [[ -n "$(git status --porcelain)" ]]; then
+        log_error "Working tree not clean; please commit or stash changes before running"
+        exit 1
+    fi
+fi
+
 # Build prompt
-BASE_PROMPT="You are a principal engineer performing a focused code improvement session.
+BASE_PROMPT=$(cat <<'EOF'
+You are a principal engineer performing a focused code improvement session.
 
 RULES:
 - Make ONE focused, atomic improvement per iteration
@@ -101,7 +110,7 @@ RULES:
 - Do NOT create new files unless absolutely necessary
 - Prefer small changes over large refactors
 - Skip purely cosmetic changes
-- If no meaningful improvements remain, make no changes"
+- If no meaningful improvements remain, make no changes
 
 PERFORMANCE CHECKLIST (apply when relevant; keep changes focused):
 - Complexity scanning: nested iteration and hidden O(n^2) (e.g., contains/indexOf in loops), repeated computation, recursion without memoization, string concat in loops, cartesian products
@@ -111,6 +120,8 @@ PERFORMANCE CHECKLIST (apply when relevant; keep changes focused):
 - Allocation: new objects in hot loops, autoboxing, string/regex churn, stream/lambda overhead, excessive defensive copies
 - Concurrency: over-synchronization, lock contention, thread-per-request, unbounded queues, busy waiting
 - Config/Deps: untuned pool/timeouts/batch sizes/caches/retries; heavy/duplicated libs or per-call clients/object mappers
+EOF
+)
 
 if [[ -n "$FOCUS_AREA" ]]; then
     BASE_PROMPT="${BASE_PROMPT}
